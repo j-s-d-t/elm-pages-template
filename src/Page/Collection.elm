@@ -11,6 +11,7 @@ import View exposing (View)
 import OptimizedDecoder as Decode exposing (Decoder)
 import DataSource exposing (DataSource)
 import DataSource.Glob as Glob
+import DataSource.File as File
 
 
 type alias Model =
@@ -35,29 +36,26 @@ page =
 type alias Data =
     {
         title : String,
-        posts : DataSource (List
-            { filePath : String
-            , slug : String
-            }
-        )
+        posts : List Post
+        
     }
-type alias Post = {
-     title : String,
-     date : String
- }
+type alias Post = 
+    { filePath : String
+    , slug : String
+    }
 
-~
 data : DataSource Data
 data =
-    File.onlyFrontmatter (Decode.map Data (Decode.field "title" (Decode.list postDecoder))) "site/index.md" 
+    DataSource.map2 (\a b -> {
+        title = a,
+        posts = b
+    }) pageDecoder blogPosts
+    
+pageDecoder : DataSource String
+pageDecoder = File.onlyFrontmatter (Decode.field "title" Decode.string) "site/index.md"
 
-blogPosts :
-    DataSource
-        (List
-            { filePath : String
-            , slug : String
-            }
-        )
+
+blogPosts :  DataSource (List Post)
 blogPosts =
     Glob.succeed
         (\filePath slug ->

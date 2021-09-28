@@ -113,7 +113,7 @@ view :
     -> (Msg -> msg)
     -> View msg
     -> { body : Html msg, title : String }
-view sharedData page model toMsg pageView = x
+view sharedData page model toMsg pageView =
     {    title = pageView.title
         , body = Html.div [] [
         Html.ul [] (List.map (\a -> Html.li [] [
