@@ -12,6 +12,7 @@ import OptimizedDecoder as Decode exposing (Decoder)
 import DataSource exposing (DataSource)
 import DataSource.Glob as Glob
 import DataSource.File as File
+import Html exposing (Html)
 
 
 type alias Model =
@@ -42,6 +43,7 @@ type alias Data =
 type alias Post = 
     { filePath : String
     , slug : String
+    , title : String
     }
 
 data : DataSource Data
@@ -68,6 +70,23 @@ blogPosts =
         |> Glob.capture Glob.wildcard
         |> Glob.match (Glob.literal ".md")
         |> Glob.toDataSource
+        |> DataSource.map
+            (List.map
+                (\blogPost ->
+                    File.onlyFrontmatter 
+                    (postFrontmatterDecoder blogPost.filePath blogPost.slug ) 
+                    blogPost.filePath
+                )
+            )
+        |> DataSource.resolve
+
+
+postFrontmatterDecoder : String -> String -> Decoder Post
+postFrontmatterDecoder filePath slug =
+    Decode.map3 Post
+        (Decode.succeed filePath)
+        (Decode.succeed slug)
+        (Decode.field "title" Decode.string)
 
 
 head :
@@ -96,4 +115,8 @@ view :
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-    View.placeholder "Collection"
+    { title = "Collection"
+    , body = [
+        Html.ul [] (List.map (\post -> Html.li [] [Html.text post.title]) static.data.posts)
+        ]
+    }
