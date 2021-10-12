@@ -1,4 +1,4 @@
-module Page.Collection exposing (Model, Msg, Data, page)
+module Page.Collection exposing (Model, Msg, Data, page, items)
 
 import DataSource exposing (DataSource)
 import Head
@@ -7,12 +7,15 @@ import Page exposing (Page, PageWithState, StaticPayload)
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
 import Shared
+import Route
 import View exposing (View)
 import OptimizedDecoder as Decode exposing (Decoder)
 import DataSource exposing (DataSource)
 import DataSource.Glob as Glob
 import DataSource.File as File
 import Html exposing (Html)
+import Html.Attributes as Attr
+import Path exposing (..)
 
 
 type alias Model =
@@ -23,7 +26,7 @@ type alias Msg =
     Never
 
 type alias RouteParams =
-    {}
+    { }
 
 page : Page RouteParams Data
 page =
@@ -34,13 +37,18 @@ page =
         |> Page.buildNoState { view = view }
 
 
+
+
+
+
 type alias Data =
     {
         title : String,
-        posts : List Post
+        items : List Item
         
     }
-type alias Post = 
+
+type alias Item = 
     { filePath : String
     , slug : String
     , title : String
@@ -50,15 +58,15 @@ data : DataSource Data
 data =
     DataSource.map2 (\a b -> {
         title = a,
-        posts = b
-    }) pageDecoder blogPosts
+        items = b
+    }) pageDecoder items
     
 pageDecoder : DataSource String
 pageDecoder = File.onlyFrontmatter (Decode.field "title" Decode.string) "site/index.md"
 
 
-blogPosts :  DataSource (List Post)
-blogPosts =
+items :  DataSource (List Item)
+items =
     Glob.succeed
         (\filePath slug ->
             { filePath = filePath
@@ -72,18 +80,18 @@ blogPosts =
         |> Glob.toDataSource
         |> DataSource.map
             (List.map
-                (\blogPost ->
+                (\item ->
                     File.onlyFrontmatter 
-                    (postFrontmatterDecoder blogPost.filePath blogPost.slug ) 
-                    blogPost.filePath
+                    (postFrontmatterDecoder item.filePath item.slug ) 
+                    item.filePath
                 )
             )
         |> DataSource.resolve
 
 
-postFrontmatterDecoder : String -> String -> Decoder Post
+postFrontmatterDecoder : String -> String -> Decoder Item
 postFrontmatterDecoder filePath slug =
-    Decode.map3 Post
+    Decode.map3 Item
         (Decode.succeed filePath)
         (Decode.succeed slug)
         (Decode.field "title" Decode.string)
@@ -117,6 +125,12 @@ view :
 view maybeUrl sharedModel static =
     { title = "Collection"
     , body = [
-        Html.ul [] (List.map (\post -> Html.li [] [Html.text post.title]) static.data.posts)
+        Html.ul [] (List.map (\item -> 
+            Html.li [] [
+                Html.a [Attr.href <| String.join "/" [Path.toRelative static.path, item.slug]] [Html.text item.title]
+                ]) static.data.items
+            )
         ]
     }
+
+
