@@ -1,15 +1,15 @@
 module Page.Index exposing (Data, Model, Msg, page)
 
 import DataSource exposing (DataSource)
+import DataSource.File as File
 import Head
 import Head.Seo as Seo
+import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, StaticPayload)
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
 import Shared
 import View exposing (View)
-import OptimizedDecoder as Decode exposing (Decoder)
-import DataSource.File as File
 
 
 type alias Model =
@@ -25,10 +25,8 @@ type alias RouteParams =
 
 
 type alias Data =
-    {
-        title : String
+    { title : String
     }
-
 
 
 page : Page RouteParams Data
@@ -42,8 +40,7 @@ page =
 
 data : DataSource Data
 data =
-    File.onlyFrontmatter (Decode.map Data (Decode.field "title" Decode.string)) "site/index.md" 
-
+    File.onlyFrontmatter (Decode.map Data (Decode.field "title" Decode.string)) "site/index.md"
 
 
 head :
@@ -64,8 +61,6 @@ head static =
         , title = static.sharedData.siteName
         }
         |> Seo.website
-
-
 
 
 view :

@@ -1,15 +1,18 @@
-module Page.Collection.Slug_ exposing (Model, Msg, Data, page)
+module Page.Collection.Slug_ exposing (Data, Model, Msg, page)
 
 import DataSource exposing (DataSource)
+import DataSource.File as File
 import Head
 import Head.Seo as Seo
+import Html exposing (Html)
+import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
+import Page.Collection as Coll
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
+import Route exposing (Route(..))
 import Shared
 import View exposing (View)
-import Route exposing (Route(..))
-import Page.Collection as Coll
 
 
 type alias Model =
@@ -19,8 +22,10 @@ type alias Model =
 type alias Msg =
     Never
 
+
 type alias RouteParams =
     { slug : String }
+
 
 page : Page RouteParams Data
 page =
@@ -35,16 +40,27 @@ page =
 routes : DataSource (List RouteParams)
 routes =
     Coll.items
-    |> DataSource.map (\items -> 
-        items |> List.map (\item -> 
-            { slug = item.slug })
-        )
+        |> DataSource.map
+            (\routeParams ->
+                routeParams
+                    |> List.map
+                        (\route ->
+                            { slug = route.slug }
+                        )
+            )
 
 
 data : RouteParams -> DataSource Data
 data routeParams =
-    DataSource.succeed ()
+    File.bodyWithFrontmatter
+        decoder
+        ("site/collection/" ++ routeParams.slug ++ ".md")
 
+
+decoder : String -> Decoder Data
+decoder body =
+    Decode.map (Data body)
+        (Decode.field "title" Decode.string)
 
 
 head :
@@ -68,7 +84,9 @@ head static =
 
 
 type alias Data =
-    ()
+    { body : String
+    , title : String
+    }
 
 
 view :
@@ -77,4 +95,9 @@ view :
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-    View.placeholder "TODO"
+    { title = static.data.title
+    , body =
+        [ Html.h1 [] [ Html.text static.data.title ]
+        , Html.text static.data.body
+        ]
+    }

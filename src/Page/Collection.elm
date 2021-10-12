@@ -1,21 +1,20 @@
-module Page.Collection exposing (Model, Msg, Data, page, items)
+module Page.Collection exposing (Data, Model, Msg, data, items, page)
 
 import DataSource exposing (DataSource)
+import DataSource.File as File
+import DataSource.Glob as Glob
 import Head
 import Head.Seo as Seo
+import Html exposing (Html)
+import Html.Attributes as Attr
+import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
-import Shared
-import Route
-import View exposing (View)
-import OptimizedDecoder as Decode exposing (Decoder)
-import DataSource exposing (DataSource)
-import DataSource.Glob as Glob
-import DataSource.File as File
-import Html exposing (Html)
-import Html.Attributes as Attr
 import Path exposing (..)
+import Route
+import Shared
+import View exposing (View)
 
 
 type alias Model =
@@ -25,8 +24,10 @@ type alias Model =
 type alias Msg =
     Never
 
+
 type alias RouteParams =
-    { }
+    {}
+
 
 page : Page RouteParams Data
 page =
@@ -37,35 +38,36 @@ page =
         |> Page.buildNoState { view = view }
 
 
-
-
-
-
 type alias Data =
-    {
-        title : String,
-        items : List Item
-        
+    { title : String
+    , items : List Item
     }
 
-type alias Item = 
-    { filePath : String
-    , slug : String
+
+type alias Item =
+    { slug : String
     , title : String
     }
 
+
 data : DataSource Data
 data =
-    DataSource.map2 (\a b -> {
-        title = a,
-        items = b
-    }) pageDecoder items
-    
+    DataSource.map2
+        (\a b ->
+            { title = a
+            , items = b
+            }
+        )
+        pageDecoder
+        items
+
+
 pageDecoder : DataSource String
-pageDecoder = File.onlyFrontmatter (Decode.field "title" Decode.string) "site/index.md"
+pageDecoder =
+    File.onlyFrontmatter (Decode.field "title" Decode.string) "site/index.md"
 
 
-items :  DataSource (List Item)
+items : DataSource (List Item)
 items =
     Glob.succeed
         (\filePath slug ->
@@ -81,18 +83,15 @@ items =
         |> DataSource.map
             (List.map
                 (\item ->
-                    File.onlyFrontmatter 
-                    (postFrontmatterDecoder item.filePath item.slug ) 
-                    item.filePath
+                    File.onlyFrontmatter (postFrontmatterDecoder item.slug) item.filePath
                 )
             )
         |> DataSource.resolve
 
 
-postFrontmatterDecoder : String -> String -> Decoder Item
-postFrontmatterDecoder filePath slug =
-    Decode.map3 Item
-        (Decode.succeed filePath)
+postFrontmatterDecoder : String -> Decoder Item
+postFrontmatterDecoder slug =
+    Decode.map2 Item
         (Decode.succeed slug)
         (Decode.field "title" Decode.string)
 
@@ -124,13 +123,15 @@ view :
     -> View Msg
 view maybeUrl sharedModel static =
     { title = "Collection"
-    , body = [
-        Html.ul [] (List.map (\item -> 
-            Html.li [] [
-                Html.a [Attr.href <| String.join "/" [Path.toRelative static.path, item.slug]] [Html.text item.title]
-                ]) static.data.items
+    , body =
+        [ Html.ul []
+            (List.map
+                (\item ->
+                    Html.li []
+                        [ Html.a [ Attr.href <| String.join "/" [ Path.toRelative static.path, item.slug ] ] [ Html.text item.title ]
+                        ]
+                )
+                static.data.items
             )
         ]
     }
-
-
