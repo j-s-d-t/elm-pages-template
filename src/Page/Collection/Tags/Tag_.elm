@@ -1,20 +1,17 @@
-module Page.Collection exposing (Data, Model, Msg, Item, data, items, page)
+module Page.Collection.Tags.Tag_ exposing (Model, Msg, Data, page)
 
 import DataSource exposing (DataSource)
 import DataSource.File as File
 import DataSource.Glob as Glob
+import OptimizedDecoder as Decode exposing (Decoder)
 import Head
 import Head.Seo as Seo
-import Html exposing (Html)
-import Html.Attributes as Attr
-import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
-import Path exposing (..)
-import Route
 import Shared
 import View exposing (View)
+import Page.Collection as Coll
 
 
 type alias Model =
@@ -24,25 +21,13 @@ type alias Model =
 type alias Msg =
     Never
 
-
 type alias RouteParams =
-    {}
+    { tag : Tag }
 
-
-page : Page RouteParams Data
-page =
-    Page.single
-        { head = head
-        , data = data
-        }
-        |> Page.buildNoState { view = view }
-
-
-type alias Data =
-    { title : String
-    , items : List Item
+type alias Tag = 
+    { slug : String
+    , title : String
     }
-
 
 type alias Item =
     { slug : String
@@ -50,26 +35,40 @@ type alias Item =
     , tags : List String
     }
 
+page : Page RouteParams Data
+page =
+    Page.prerender
+        { head = head
+        , routes = routes
+        , data = data
+        }
+        |> Page.buildNoState { view = view }
 
-data : DataSource Data
-data =
-    DataSource.map2
-        (\a b ->
-            { title = a
-            , items = b
-            }
+-- TODO: use a Set to collect all tag instances
+routes : DataSource (List RouteParams)
+routes =
+    DataSource.succeed [
+        { tag = "One" }
+    ]
+
+
+data : RouteParams -> DataSource Data
+data routeParams =
+    itemsData
+    |> DataSource.map
+        (\items ->
+            items
+            |> List.map (\item -> 
+                { slug = item.slug
+                , title = item.title
+                , tags = item.tags
+                }
+            )
+            |> List.filter (\a -> List.member routeParams.tag a.tags)
         )
-        pageDecoder
-        items
 
-
-pageDecoder : DataSource String
-pageDecoder =
-    File.onlyFrontmatter (Decode.field "title" Decode.string) "site/index.md"
-
-
-items : DataSource (List Item)
-items =
+itemsData : DataSource (List Item)
+itemsData =
     Glob.succeed
         (\filePath slug ->
             { filePath = filePath
@@ -84,20 +83,17 @@ items =
         |> DataSource.map
             (List.map
                 (\item ->
-                    File.onlyFrontmatter (postFrontmatterDecoder item.slug) item.filePath
+                    File.onlyFrontmatter (itemFrontmatterDecoder item.slug) item.filePath
                 )
             )
         |> DataSource.resolve
 
-
-postFrontmatterDecoder : String -> Decoder Item
-postFrontmatterDecoder slug =
+itemFrontmatterDecoder : String -> Decoder Item
+itemFrontmatterDecoder slug =
     Decode.map3 Item
         (Decode.succeed slug)
         (Decode.field "title" Decode.string)
         (Decode.field "tags" <| Decode.list Decode.string)
-
-
 
 head :
     StaticPayload Data RouteParams
@@ -119,22 +115,13 @@ head static =
         |> Seo.website
 
 
+type alias Data =
+    List Item
+
 view :
     Maybe PageUrl
     -> Shared.Model
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-    { title = "Collection"
-    , body =
-        [ Html.ul []
-            (List.map
-                (\item ->
-                    Html.li []
-                        [ Html.a [ Attr.href <| String.join "/" [ Path.toRelative static.path, item.slug ] ] [ Html.text item.title ]
-                        ]
-                )
-                static.data.items
-            )
-        ]
-    }
+    View.placeholder "Collection.Tags.Tag_"
