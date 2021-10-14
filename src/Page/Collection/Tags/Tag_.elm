@@ -1,17 +1,18 @@
-module Page.Collection.Tags.Tag_ exposing (Model, Msg, Data, page)
+module Page.Collection.Tags.Tag_ exposing (Data, Model, Msg, page)
 
 import DataSource exposing (DataSource)
 import DataSource.File as File
 import DataSource.Glob as Glob
-import OptimizedDecoder as Decode exposing (Decoder)
 import Head
 import Head.Seo as Seo
+import Html exposing (Html)
+import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
+import Page.Collection as Coll
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
 import Shared
 import View exposing (View)
-import Page.Collection as Coll
 
 
 type alias Model =
@@ -21,19 +22,23 @@ type alias Model =
 type alias Msg =
     Never
 
-type alias RouteParams =
-    { tag : Tag }
 
-type alias Tag = 
+type alias RouteParams =
+    { tag : String }
+
+
+type alias Tag =
     { slug : String
     , title : String
     }
+
 
 type alias Item =
     { slug : String
     , title : String
-    , tags : List String
+    , tags : List Tag
     }
+
 
 page : Page RouteParams Data
 page =
@@ -44,28 +49,49 @@ page =
         }
         |> Page.buildNoState { view = view }
 
--- TODO: use a Set to collect all tag instances
+
+
+-- TODO: Collect all tag instances and remove duplicates
+
+
 routes : DataSource (List RouteParams)
 routes =
-    DataSource.succeed [
-        { tag = "One" }
-    ]
+    itemsData
+        |> DataSource.map
+            (\items ->
+                items
+                    -- Get all tags
+                    |> List.concatMap (\item -> getTagSlugs item.tags)
+                    |> List.map (\slug -> { tag = slug })
+            )
 
 
 data : RouteParams -> DataSource Data
 data routeParams =
     itemsData
-    |> DataSource.map
-        (\items ->
-            items
-            |> List.map (\item -> 
-                { slug = item.slug
-                , title = item.title
-                , tags = item.tags
+        |> DataSource.map
+            (\items ->
+                -- TODO: Need to populate the title with the title field of the current tag
+                -- TODO: Need to filter out tag duplicates
+                { title = ""
+                , items =
+                    items
+                        |> List.map
+                            (\item ->
+                                { slug = item.slug
+                                , title = item.title
+                                , tags = item.tags
+                                }
+                            )
+                        |> List.filter (\a -> List.member routeParams.tag <| getTagSlugs a.tags)
                 }
             )
-            |> List.filter (\a -> List.member routeParams.tag a.tags)
-        )
+
+
+getTagSlugs : List Tag -> List String
+getTagSlugs =
+    List.map .slug
+
 
 itemsData : DataSource (List Item)
 itemsData =
@@ -88,12 +114,33 @@ itemsData =
             )
         |> DataSource.resolve
 
+
 itemFrontmatterDecoder : String -> Decoder Item
 itemFrontmatterDecoder slug =
     Decode.map3 Item
         (Decode.succeed slug)
         (Decode.field "title" Decode.string)
-        (Decode.field "tags" <| Decode.list Decode.string)
+        (Decode.field "tags" <|
+            Decode.list
+                (Decode.string
+                    |> Decode.andThen tagDecoder
+                )
+        )
+
+
+tagDecoder : String -> Decoder Tag
+tagDecoder tag =
+    let
+        slugFormat =
+            tag
+                |> String.trim
+                |> String.replace " " "-"
+                |> String.toLower
+    in
+    Decode.map2 Tag
+        (Decode.succeed <| slugFormat)
+        (Decode.succeed tag)
+
 
 head :
     StaticPayload Data RouteParams
@@ -116,7 +163,10 @@ head static =
 
 
 type alias Data =
-    List Item
+    { title : String
+    , items : List Item
+    }
+
 
 view :
     Maybe PageUrl
@@ -124,4 +174,4 @@ view :
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-    View.placeholder "Collection.Tags.Tag_"
+    View.placeholder <| "Tag: " ++ static.data.title
