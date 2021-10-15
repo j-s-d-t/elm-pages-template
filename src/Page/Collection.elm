@@ -1,4 +1,4 @@
-module Page.Collection exposing (Data, Model, Msg, Item, data, items, page)
+module Page.Collection exposing (Data, Model, Msg, data, page)
 
 import DataSource exposing (DataSource)
 import DataSource.File as File
@@ -7,6 +7,7 @@ import Head
 import Head.Seo as Seo
 import Html exposing (Html)
 import Html.Attributes as Attr
+import Item
 import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
 import Pages.PageUrl exposing (PageUrl)
@@ -40,14 +41,7 @@ page =
 
 type alias Data =
     { title : String
-    , items : List Item
-    }
-
-
-type alias Item =
-    { slug : String
-    , title : String
-    , tags : List String
+    , items : List Item.Item
     }
 
 
@@ -60,43 +54,12 @@ data =
             }
         )
         pageDecoder
-        items
+        Item.itemsData
 
 
 pageDecoder : DataSource String
 pageDecoder =
     File.onlyFrontmatter (Decode.field "title" Decode.string) "site/index.md"
-
-
-items : DataSource (List Item)
-items =
-    Glob.succeed
-        (\filePath slug ->
-            { filePath = filePath
-            , slug = slug
-            }
-        )
-        |> Glob.captureFilePath
-        |> Glob.match (Glob.literal "site/collection/")
-        |> Glob.capture Glob.wildcard
-        |> Glob.match (Glob.literal ".md")
-        |> Glob.toDataSource
-        |> DataSource.map
-            (List.map
-                (\item ->
-                    File.onlyFrontmatter (postFrontmatterDecoder item.slug) item.filePath
-                )
-            )
-        |> DataSource.resolve
-
-
-postFrontmatterDecoder : String -> Decoder Item
-postFrontmatterDecoder slug =
-    Decode.map3 Item
-        (Decode.succeed slug)
-        (Decode.field "title" Decode.string)
-        (Decode.field "tags" <| Decode.list Decode.string)
-
 
 
 head :

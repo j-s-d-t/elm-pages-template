@@ -10,6 +10,7 @@ import Page exposing (Page, PageWithState, StaticPayload)
 import Page.Collection as Coll
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
+import Item
 import Route exposing (Route(..))
 import Shared
 import View exposing (View)
@@ -39,7 +40,7 @@ page =
 
 routes : DataSource (List RouteParams)
 routes =
-    Coll.items
+    Item.itemsData
         |> DataSource.map
             (\routeParams ->
                 routeParams

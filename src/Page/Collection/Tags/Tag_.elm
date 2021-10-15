@@ -5,14 +5,19 @@ import DataSource.File as File
 import DataSource.Glob as Glob
 import Head
 import Head.Seo as Seo
-import Html exposing (Html)
+import Html as H exposing (Html)
+import Html.Attributes as A
+import List.Extra exposing (unique)
 import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
 import Page.Collection as Coll
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
+import Path exposing (..)
 import Shared
 import View exposing (View)
+import Item
+import Route
 
 
 type alias Model =
@@ -27,10 +32,11 @@ type alias RouteParams =
     { tag : String }
 
 
+
+-- We ue a tuple so that tags are comparable
+
 type alias Tag =
-    { slug : String
-    , title : String
-    }
+    ( String, String )
 
 
 type alias Item =
@@ -56,90 +62,44 @@ page =
 
 routes : DataSource (List RouteParams)
 routes =
-    itemsData
+    Item.itemsData
         |> DataSource.map
             (\items ->
                 items
-                    -- Get all tags
-                    |> List.concatMap (\item -> getTagSlugs item.tags)
+                    |> Item.getAllTags
+                    |> Item.getTagSlugs
                     |> List.map (\slug -> { tag = slug })
             )
 
 
 data : RouteParams -> DataSource Data
 data routeParams =
-    itemsData
+    Item.itemsData
         |> DataSource.map
             (\items ->
-                -- TODO: Need to populate the title with the title field of the current tag
-                -- TODO: Need to filter out tag duplicates
-                { title = ""
-                , items =
-                    items
-                        |> List.map
-                            (\item ->
-                                { slug = item.slug
-                                , title = item.title
-                                , tags = item.tags
-                                }
-                            )
-                        |> List.filter (\a -> List.member routeParams.tag <| getTagSlugs a.tags)
+                let
+                    allTags =
+                        Item.getAllTags items
+
+                    title =
+                        allTags
+                            |> List.filter (\( x, y ) -> x == routeParams.tag)
+                            |> (\tags ->
+                                    case tags of
+                                        [] ->
+                                            "No tags!"
+
+                                        x :: xs ->
+                                            Tuple.second x
+                               )
+
+                    filteredItems =
+                        List.filter (\x -> List.member routeParams.tag <| Item.getTagSlugs x.tags) items
+                in
+                { title = title
+                , items = filteredItems
                 }
             )
-
-
-getTagSlugs : List Tag -> List String
-getTagSlugs =
-    List.map .slug
-
-
-itemsData : DataSource (List Item)
-itemsData =
-    Glob.succeed
-        (\filePath slug ->
-            { filePath = filePath
-            , slug = slug
-            }
-        )
-        |> Glob.captureFilePath
-        |> Glob.match (Glob.literal "site/collection/")
-        |> Glob.capture Glob.wildcard
-        |> Glob.match (Glob.literal ".md")
-        |> Glob.toDataSource
-        |> DataSource.map
-            (List.map
-                (\item ->
-                    File.onlyFrontmatter (itemFrontmatterDecoder item.slug) item.filePath
-                )
-            )
-        |> DataSource.resolve
-
-
-itemFrontmatterDecoder : String -> Decoder Item
-itemFrontmatterDecoder slug =
-    Decode.map3 Item
-        (Decode.succeed slug)
-        (Decode.field "title" Decode.string)
-        (Decode.field "tags" <|
-            Decode.list
-                (Decode.string
-                    |> Decode.andThen tagDecoder
-                )
-        )
-
-
-tagDecoder : String -> Decoder Tag
-tagDecoder tag =
-    let
-        slugFormat =
-            tag
-                |> String.trim
-                |> String.replace " " "-"
-                |> String.toLower
-    in
-    Decode.map2 Tag
-        (Decode.succeed <| slugFormat)
-        (Decode.succeed tag)
 
 
 head :
@@ -174,4 +134,20 @@ view :
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-    View.placeholder <| "Tag: " ++ static.data.title
+    { title = "Tag: " ++ static.data.title
+    , body =
+        [ H.h1 []
+            [ H.span [] [ H.text "Tags:" ]
+            , H.br [] []
+            , H.span [] [ H.text static.data.title ]
+            , H.ul []
+                (List.map
+                    (\item ->
+                        H.li []
+                            [ Route.link  (Route.Collection__Slug_ { slug = item.slug }) [] [ H.text item.title ] ]
+                    )
+                    static.data.items
+                )
+            ]
+        ]
+    }
