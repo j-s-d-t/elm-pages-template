@@ -4,14 +4,13 @@ import DataSource exposing (DataSource)
 import DataSource.File as File
 import Head
 import Head.Seo as Seo
-import Html exposing (Html)
+import Html as H exposing (Html)
+import Item
 import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
-import Page.Collection as Coll
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
-import Item
-import Route exposing (Route(..))
+import Route exposing (Route(..), link)
 import Shared
 import View exposing (View)
 
@@ -28,6 +27,10 @@ type alias RouteParams =
     { slug : String }
 
 
+type alias Data =
+    Item.Item
+
+
 page : Page RouteParams Data
 page =
     Page.prerender
@@ -40,7 +43,7 @@ page =
 
 routes : DataSource (List RouteParams)
 routes =
-    Item.itemsData
+    Item.itemCollectionData
         |> DataSource.map
             (\routeParams ->
                 routeParams
@@ -53,15 +56,7 @@ routes =
 
 data : RouteParams -> DataSource Data
 data routeParams =
-    File.bodyWithFrontmatter
-        decoder
-        ("site/collection/" ++ routeParams.slug ++ ".md")
-
-
-decoder : String -> Decoder Data
-decoder body =
-    Decode.map (Data body)
-        (Decode.field "title" Decode.string)
+    Item.itemSingleData routeParams.slug
 
 
 head :
@@ -84,12 +79,6 @@ head static =
         |> Seo.website
 
 
-type alias Data =
-    { body : String
-    , title : String
-    }
-
-
 view :
     Maybe PageUrl
     -> Shared.Model
@@ -98,7 +87,17 @@ view :
 view maybeUrl sharedModel static =
     { title = static.data.title
     , body =
-        [ Html.h1 [] [ Html.text static.data.title ]
-        , Html.text static.data.body
+        [ H.h1 [] [ H.text static.data.title ]
+        , H.text static.data.body
+        , H.h2 [] [ H.text "Tags" ]
+        , H.ul []
+            (List.map
+                (\( tagsSlug, tagTitle ) ->
+                    H.li []
+                        [ link (Route.Collection__Tags__Tag_ { tag = tagsSlug }) [] [ H.text tagTitle ]
+                        ]
+                )
+                static.data.tags
+            )
         ]
     }

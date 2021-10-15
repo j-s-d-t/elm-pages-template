@@ -19,20 +19,21 @@ import View exposing (View)
 
 -- contains all data definitions fot the Item type
 
-
+-- TODO: convert body to Markdown
 type alias Item =
-    { slug : String
+    { body : String
+    , slug : String
     , title : String
     , tags : List Tag
     }
-
 
 type alias Tag =
     ( String, String )
 
 
-itemsData : DataSource (List Item)
-itemsData =
+
+itemCollectionData : DataSource (List Item)
+itemCollectionData =
     Glob.succeed
         (\filePath slug ->
             { filePath = filePath
@@ -47,10 +48,18 @@ itemsData =
         |> DataSource.map
             (List.map
                 (\item ->
-                    File.onlyFrontmatter (itemFrontmatterDecoder item.slug) item.filePath
+                    File.bodyWithFrontmatter (itemDecoder item.slug) item.filePath
                 )
             )
         |> DataSource.resolve
+
+
+
+itemSingleData : String -> DataSource Item
+itemSingleData slug =
+    File.bodyWithFrontmatter
+        (itemDecoder slug)
+        ("site/collection/" ++ slug ++ ".md")
 
 
 getAllTags : List Item -> List Tag
@@ -69,16 +78,14 @@ getTagSlugs =
     List.map Tuple.first
 
 
-itemFrontmatterDecoder : String -> Decoder Item
-itemFrontmatterDecoder slug =
-    Decode.map3 Item
+itemDecoder : String -> String -> Decoder Item
+itemDecoder  slug body =
+    Decode.map3 (Item body)
         (Decode.succeed slug)
         (Decode.field "title" Decode.string)
         (Decode.field "tags" <|
             Decode.list (Decode.andThen tagDecoder Decode.string)
         )
-
-
 
 -- Gather all the tags from all items, flatten the list and remove duplicates
 

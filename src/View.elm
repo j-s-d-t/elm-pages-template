@@ -1,6 +1,6 @@
 module View exposing (View, map, placeholder)
 
-import Html exposing (Html)
+import Html as H exposing (Html)
 
 
 type alias View msg =
@@ -12,12 +12,12 @@ type alias View msg =
 map : (msg1 -> msg2) -> View msg1 -> View msg2
 map fn doc =
     { title = doc.title
-    , body = List.map (Html.map fn) doc.body
+    , body = List.map (H.map fn) doc.body
     }
 
 
 placeholder : String -> View msg
 placeholder moduleName =
     { title = moduleName
-    , body = [ Html.text moduleName ]
+    , body = [ H.text moduleName ]
     }

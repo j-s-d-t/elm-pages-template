@@ -7,17 +7,16 @@ import Head
 import Head.Seo as Seo
 import Html as H exposing (Html)
 import Html.Attributes as A
+import Item
 import List.Extra exposing (unique)
 import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, PageWithState, StaticPayload)
-import Page.Collection as Coll
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
 import Path exposing (..)
+import Route
 import Shared
 import View exposing (View)
-import Item
-import Route
 
 
 type alias Model =
@@ -34,6 +33,7 @@ type alias RouteParams =
 
 
 -- We ue a tuple so that tags are comparable
+
 
 type alias Tag =
     ( String, String )
@@ -62,7 +62,7 @@ page =
 
 routes : DataSource (List RouteParams)
 routes =
-    Item.itemsData
+    Item.itemCollectionData
         |> DataSource.map
             (\items ->
                 items
@@ -74,7 +74,7 @@ routes =
 
 data : RouteParams -> DataSource Data
 data routeParams =
-    Item.itemsData
+    Item.itemCollectionData
         |> DataSource.map
             (\items ->
                 let
@@ -124,7 +124,7 @@ head static =
 
 type alias Data =
     { title : String
-    , items : List Item
+    , items : List Item.Item
     }
 
 
@@ -144,7 +144,7 @@ view maybeUrl sharedModel static =
                 (List.map
                     (\item ->
                         H.li []
-                            [ Route.link  (Route.Collection__Slug_ { slug = item.slug }) [] [ H.text item.title ] ]
+                            [ Route.link (Route.Collection__Slug_ { slug = item.slug }) [] [ H.text item.title ] ]
                     )
                     static.data.items
                 )

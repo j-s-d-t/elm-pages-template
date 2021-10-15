@@ -5,7 +5,7 @@ import DataSource.File as File
 import DataSource.Glob as Glob
 import Head
 import Head.Seo as Seo
-import Html exposing (Html)
+import Html as H exposing (Html)
 import Html.Attributes as Attr
 import Item
 import OptimizedDecoder as Decode exposing (Decoder)
@@ -54,7 +54,7 @@ data =
             }
         )
         pageDecoder
-        Item.itemsData
+        Item.itemCollectionData
 
 
 pageDecoder : DataSource String
@@ -90,12 +90,15 @@ view :
 view maybeUrl sharedModel static =
     { title = "Collection"
     , body =
-        [ Html.ul []
+        [ H.ul []
             (List.map
                 (\item ->
-                    Html.li []
-                        [ Html.a [ Attr.href <| String.join "/" [ Path.toRelative static.path, item.slug ] ] [ Html.text item.title ]
-                        ]
+                    H.li []
+                        [ Route.link 
+                            (Route.Collection__Slug_ { slug = item.slug })
+                            []
+                            [ H.text item.title ]  ]
+                        
                 )
                 static.data.items
             )
