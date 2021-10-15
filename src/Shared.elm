@@ -1,11 +1,11 @@
-module Shared exposing (Data, Model, Msg(..), SharedMsg(..), template, data)
+module Shared exposing (Data, Model, Msg(..), SharedMsg(..), data, template)
 
 import Browser.Navigation
 import DataSource
 import DataSource.File as File
-import OptimizedDecoder as Decode exposing (Decoder)
 import Html exposing (Html)
 import Html.Attributes as Attrs
+import OptimizedDecoder as Decode exposing (Decoder)
 import Pages.Flags
 import Pages.PageUrl exposing (PageUrl)
 import Path exposing (Path)
@@ -35,19 +35,20 @@ type Msg
 
 
 type alias Data =
-    {
-        navItems : List NavItem
-        , siteName : String
+    { navItems : List NavItem
+    , siteName : String
     }
 
 
 type SharedMsg
     = NoOp
 
-type alias NavItem = {
-    name : String
+
+type alias NavItem =
+    { name : String
     , url : String
     }
+
 
 type alias Model =
     { showMobileMenu : Bool
@@ -91,18 +92,23 @@ subscriptions _ _ =
 
 data : DataSource.DataSource Data
 data =
-    File.onlyFrontmatter siteMetaDecoder "site/meta.md" 
-        
+    File.onlyFrontmatter siteMetaDecoder "site/meta.md"
+
+
 siteMetaDecoder : Decoder Data
 siteMetaDecoder =
-   Decode.map2 Data
+    Decode.map2 Data
         (Decode.field "nav" (Decode.list navItemDecoder))
-        (Decode.field "site-name" (Decode.string))
+        (Decode.field "site-name" Decode.string)
+
+
 navItemDecoder : Decoder NavItem
 navItemDecoder =
     Decode.map2 NavItem
         (Decode.field "name" Decode.string)
         (Decode.field "url" Decode.string)
+
+
 view :
     Data
     ->
@@ -114,10 +120,18 @@ view :
     -> View msg
     -> { body : Html msg, title : String }
 view sharedData page model toMsg pageView =
-    {    title = pageView.title
-        , body = Html.div [] [
-        Html.ul [] (List.map (\a -> Html.li [] [
-            Html.a [ Attrs.href <| "/" ++ a.url ] [ Html.text a.name ]
-            ]) sharedData.navItems)
-        , Html.div [] pageView.body]
+    { title = pageView.title
+    , body =
+        Html.div []
+            [ Html.ul []
+                (List.map
+                    (\a ->
+                        Html.li []
+                            [ Html.a [ Attrs.href <| "/" ++ a.url ] [ Html.text a.name ]
+                            ]
+                    )
+                    sharedData.navItems
+                )
+            , Html.div [] pageView.body
+            ]
     }
