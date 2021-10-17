@@ -4,6 +4,7 @@ import DataSource exposing (DataSource)
 import DataSource.File as File
 import Head
 import Head.Seo as Seo
+import Html as H exposing (Html)
 import OptimizedDecoder as Decode exposing (Decoder)
 import Page exposing (Page, StaticPayload)
 import Pages.PageUrl exposing (PageUrl)
@@ -26,6 +27,7 @@ type alias RouteParams =
 
 type alias Data =
     { title : String
+    , rows : List String
     }
 
 
@@ -40,7 +42,14 @@ page =
 
 data : DataSource Data
 data =
-    File.onlyFrontmatter (Decode.map Data (Decode.field "title" Decode.string)) "site/index.md"
+    File.onlyFrontmatter decoder "site/index.md"
+
+
+decoder : Decoder Data
+decoder =
+    Decode.map2 Data
+        (Decode.field "title" Decode.string)
+        (Decode.field "rows" <| Decode.list Decode.string)
 
 
 head :
@@ -69,4 +78,15 @@ view :
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-    View.placeholder <| static.sharedData.siteName ++ " – " ++ static.data.title
+    { title = static.data.title
+    , body =
+        [ H.ul []
+            (List.map
+                (\row ->
+                    H.li []
+                        [ H.text row ]
+                )
+                static.data.rows
+            )
+        ]
+    }
