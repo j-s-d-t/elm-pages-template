@@ -1,6 +1,5 @@
 ---
 title: "Home"
-<<<<<<< HEAD
 ---
 # Website improvements - October 2021
 
@@ -61,14 +60,3 @@ These dates are based on an average one hours work / day
 | Present to ELT | 3 December 2021 |
 | User testing | 17 December 2021 |
 | Go live | 14 January 2021 |
-
-
-
-
-
-
-=======
-rows:
-    - Another row
----
->>>>>>> 7c7976bab9553a9361e0af7376ead673968e3a03

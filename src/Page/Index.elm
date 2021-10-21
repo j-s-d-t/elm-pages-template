@@ -32,13 +32,8 @@ type alias RouteParams =
 
 
 type alias Data =
-<<<<<<< HEAD
     { body  : String
     , title : String
-=======
-    { title : String
-    , rows : List String
->>>>>>> 7c7976bab9553a9361e0af7376ead673968e3a03
     }
 
 
@@ -53,7 +48,6 @@ page =
 
 data : DataSource Data
 data =
-<<<<<<< HEAD
     File.bodyWithFrontmatter
         (decoder)
         ("site/index.md")
@@ -61,17 +55,7 @@ decoder : String -> Decoder Data
 decoder   body =
     Decode.map (Data body)
         (Decode.field "title" Decode.string)
-    
-=======
-    File.onlyFrontmatter decoder "site/index.md"
 
-
-decoder : Decoder Data
-decoder =
-    Decode.map2 Data
-        (Decode.field "title" Decode.string)
-        (Decode.field "rows" <| Decode.list Decode.string)
->>>>>>> 7c7976bab9553a9361e0af7376ead673968e3a03
 
 
 head :
@@ -103,24 +87,9 @@ view :
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-<<<<<<< HEAD
     { title = "Collection"
     , body =
         [ H.h1 [] [H.text static.data.title]
         , H.div [] (MarkdownRenderer.mdToHtml static.data.body)
         ]  
-        
-=======
-    { title = static.data.title
-    , body =
-        [ H.ul []
-            (List.map
-                (\row ->
-                    H.li []
-                        [ H.text row ]
-                )
-                static.data.rows
-            )
-        ]
->>>>>>> 7c7976bab9553a9361e0af7376ead673968e3a03
     }
