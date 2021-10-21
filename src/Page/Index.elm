@@ -9,7 +9,13 @@ import Page exposing (Page, StaticPayload)
 import Pages.PageUrl exposing (PageUrl)
 import Pages.Url
 import Shared
+import Route
 import View exposing (View)
+import Html as H exposing (Html)
+import Html.Attributes as Attr
+import Markdown.Parser as Markdown
+import Markdown.Renderer
+import MarkdownRenderer
 
 
 type alias Model =
@@ -25,7 +31,8 @@ type alias RouteParams =
 
 
 type alias Data =
-    { title : String
+    { body  : String
+    , title : String
     }
 
 
@@ -40,7 +47,14 @@ page =
 
 data : DataSource Data
 data =
-    File.onlyFrontmatter (Decode.map Data (Decode.field "title" Decode.string)) "site/index.md"
+    File.bodyWithFrontmatter
+        (decoder)
+        ("site/index.md")
+decoder : String -> Decoder Data
+decoder   body =
+    Decode.map (Data body)
+        (Decode.field "title" Decode.string)
+    
 
 
 head :
@@ -63,10 +77,19 @@ head static =
         |> Seo.website
 
 
+
+
+
 view :
     Maybe PageUrl
     -> Shared.Model
     -> StaticPayload Data RouteParams
     -> View Msg
 view maybeUrl sharedModel static =
-    View.placeholder <| static.sharedData.siteName ++ " – " ++ static.data.title
+    { title = "Collection"
+    , body =
+        [ H.h1 [] [H.text static.data.title]
+        , H.div [] (MarkdownRenderer.mdToHtml static.data.body)
+        ]  
+        
+    }
