@@ -90,7 +90,8 @@ view :
 view maybeUrl sharedModel static =
     { title = "Collection"
     , body =
-        [ H.ul []
+        [ H.h1 [] [ H.text static.data.title ]
+        , H.ul []
             (List.map
                 (\item ->
                     H.li []

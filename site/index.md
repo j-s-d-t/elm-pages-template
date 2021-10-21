@@ -1,7 +1,6 @@
 ---
 title: "Home"
 ---
-# Website improvements - October 2021
 
 ## Website goals
 
@@ -15,9 +14,9 @@ title: "Home"
 ## Goals of this review
 
 - Clearly define the purpose of
-	- the home page
-	- the navigation menu
-	- the quick links menu
+  - the home page
+  - the navigation menu
+  - the quick links menu
 
 ## Relevant metrics
 - Navigation report

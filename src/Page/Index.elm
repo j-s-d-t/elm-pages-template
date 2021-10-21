@@ -13,7 +13,7 @@ import Shared
 import Route
 import View exposing (View)
 import Html as H exposing (Html)
-import Html.Attributes as Attr
+import Html.Attributes as A
 import Markdown.Parser as Markdown
 import Markdown.Renderer
 import MarkdownRenderer
@@ -89,7 +89,7 @@ view :
 view maybeUrl sharedModel static =
     { title = "Collection"
     , body =
-        [ H.h1 [] [H.text static.data.title]
+        [ H.h1 [ ] [H.text static.data.title]
         , H.div [] (MarkdownRenderer.mdToHtml static.data.body)
         ]  
     }

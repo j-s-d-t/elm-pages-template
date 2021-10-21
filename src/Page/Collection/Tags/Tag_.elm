@@ -137,9 +137,11 @@ view maybeUrl sharedModel static =
     { title = "Tag: " ++ static.data.title
     , body =
         [ H.h1 []
-            [ H.span [] [ H.text "Tags:" ]
+            [ H.span [ A.class "f4 normal i"] [ H.text "Tags:" ]
             , H.br [] []
             , H.span [] [ H.text static.data.title ]
+            
+            ]
             , H.ul []
                 (List.map
                     (\item ->
@@ -148,6 +150,5 @@ view maybeUrl sharedModel static =
                     )
                     static.data.items
                 )
-            ]
         ]
     }

@@ -32,7 +32,7 @@ htmlRenderer =
 
                 Block.H6 ->
                     H.h6 [] children
-    , paragraph = H.p []
+    , paragraph = H.p [ A.class "lh-copy"]
     , hardLineBreak = H.br [] []
     , blockQuote = H.blockquote []
     , strong =
@@ -76,7 +76,7 @@ htmlRenderer =
         H.text
     , unorderedList =
         \items ->
-            H.ul []
+            H.ul [ A.class "pa3"]
                 (items
                     |> List.map
                         (\item ->
@@ -143,9 +143,9 @@ htmlRenderer =
                     ]
                 ]
     , thematicBreak = H.hr [] []
-    , table = H.table []
+    , table = H.table [ A.class "f6 w-100 mw8 center" ]
     , tableHeader = H.thead []
-    , tableBody = H.tbody []
+    , tableBody = H.tbody [ A.class "lh-copy"]
     , tableRow = H.tr []
     , tableHeaderCell =
         \maybeAlignment ->
@@ -168,7 +168,7 @@ htmlRenderer =
                         |> Maybe.map List.singleton
                         |> Maybe.withDefault []
             in
-            H.th attrs
+            H.th ([A.class "fw6 bb b--black-20 tl pb3 pr3 bg-white"] ++ attrs )
     , tableCell =
         \maybeAlignment ->
             let
@@ -190,7 +190,7 @@ htmlRenderer =
                         |> Maybe.map List.singleton
                         |> Maybe.withDefault []
             in
-            H.td attrs
+            H.td ([A.class "pv3 pr3 bb b--black-20"] ++ attrs )
     }
 
 

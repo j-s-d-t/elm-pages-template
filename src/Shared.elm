@@ -3,8 +3,8 @@ module Shared exposing (Data, Model, Msg(..), SharedMsg(..), data, template)
 import Browser.Navigation
 import DataSource
 import DataSource.File as File
-import Html exposing (Html)
-import Html.Attributes as Attrs
+import Html as H exposing (Html)
+import Html.Attributes as A
 import OptimizedDecoder as Decode exposing (Decoder)
 import Pages.Flags
 import Pages.PageUrl exposing (PageUrl)
@@ -122,16 +122,17 @@ view :
 view sharedData page model toMsg pageView =
     { title = pageView.title
     , body =
-        Html.div []
-            [ Html.ul []
+        H.div [ A.class "mw8 center lh-copy pa4"]
+            [ H.nav [] [ H.ul [ A.class "list pa0"]
                 (List.map
                     (\a ->
-                        Html.li []
-                            [ Html.a [ Attrs.href <| "/" ++ a.url ] [ Html.text a.name ]
+                        H.li [ A.class "dib mr3"]
+                            [ H.a [ A.href <| "/" ++ a.url ] [ H.text a.name ]
                             ]
                     )
                     sharedData.navItems
                 )
-            , Html.div [] pageView.body
+            ]
+            , H.div [] pageView.body
             ]
     }
