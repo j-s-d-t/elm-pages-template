@@ -4,5 +4,5 @@ nav:
     name: Home
   - url: collection
     name: Collection
-site-name: Elm Pages Template
+site-name: Elm Pages Template    
 ---

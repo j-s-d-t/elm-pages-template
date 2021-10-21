@@ -92,7 +92,7 @@ subscriptions _ _ =
 
 data : DataSource.DataSource Data
 data =
-    File.onlyFrontmatter siteMetaDecoder "site/meta.md"
+    File.onlyFrontmatter siteMetaDecoder "site/global.md"
 
 
 siteMetaDecoder : Decoder Data

@@ -1,5 +1,6 @@
 ---
 title: "Home"
+<<<<<<< HEAD
 ---
 # Website improvements - October 2021
 
@@ -66,3 +67,8 @@ These dates are based on an average one hours work / day
 
 
 
+=======
+rows:
+    - Another row
+---
+>>>>>>> 7c7976bab9553a9361e0af7376ead673968e3a03
